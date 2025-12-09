@@ -691,7 +691,7 @@ if page == "Beranda":
     st.markdown("</div>", unsafe_allow_html=True)
 
 # -------------------------------------------------------
-# ➕ HALAMAN TAMBAH DATA
+# ➕ HALAMAN TAMBAH DATA (DIUBAH MENJADI AUTOCOMPLETE)
 # -------------------------------------------------------
 elif page == "Tambah Data":
     st.markdown("""
@@ -710,15 +710,35 @@ elif page == "Tambah Data":
             col1, col2 = st.columns(2)
             
             with col1:
-                nama = st.selectbox("Nama Siswa", df_siswa["Nama"].tolist())
-                if not df_siswa.empty and nama:
+                # Autocomplete untuk nama siswa (text input kosong dulu)
+                nama_query = st.text_input("Nama Siswa", value="", placeholder="Ketik nama siswa...", key="nama_query")
+                
+                # Generate suggestions hanya saat mengetik
+                siswa_list = df_siswa["Nama"].astype(str).tolist() if not df_siswa.empty else []
+                suggestions_nama = []
+                if nama_query:
+                    suggestions_nama = [n for n in siswa_list if nama_query.lower() in n.lower()]
+                    # batasi jumlah saran
+                    suggestions_nama = suggestions_nama[:10]
+                
+                # Tampilkan saran jika ada
+                nama = nama_query  # default: apa yang diketik
+                if suggestions_nama:
+                    st.caption("Saran:")
+                    # radio agar user bisa memilih salah satu saran dengan mudah
+                    pilih_nama = st.radio("Pilih nama dari saran (opsional)", options=suggestions_nama, key="nama_saran")
+                    if pilih_nama:
+                        nama = pilih_nama
+                
+                # Jika nama cocok di df_siswa, isi kelas otomatis
+                if not df_siswa.empty and nama in df_siswa["Nama"].values:
                     kelas_data = df_siswa[df_siswa["Nama"] == nama]["Kelas"]
                     kelas = kelas_data.values[0] if len(kelas_data) > 0 else ""
                 else:
                     kelas = ""
-                st.text_input("Kelas", value=kelas, disabled=True)
+                st.text_input("Kelas", value=kelas, disabled=True, key="kelas_display")
                 
-                jenis = st.radio("Jenis", ["Pelanggaran", "Prestasi"], horizontal=True)
+                jenis = st.radio("Jenis", ["Pelanggaran", "Prestasi"], horizontal=True, key="jenis_radio")
             
             with col2:
                 selected = ""
@@ -726,44 +746,57 @@ elif page == "Tambah Data":
                 
                 if jenis == "Pelanggaran":
                     if not df_db_pelanggaran.empty and "Nama Pelanggaran" in df_db_pelanggaran.columns:
-                        pelanggaran_list = df_db_pelanggaran["Nama Pelanggaran"].tolist()
-                        if len(pelanggaran_list) > 0:
-                            selected = st.selectbox(
-                                "Pilih Pelanggaran", 
-                                pelanggaran_list,
-                                help="Ketik untuk mencari",
-                                key="select_pelanggaran_input"
-                            )
-                            poin_row = df_db_pelanggaran[df_db_pelanggaran["Nama Pelanggaran"] == selected]
-                            if len(poin_row) > 0:
-                                poin_otomatis = float(poin_row["Poin"].values[0])
-                            st.number_input("Poin (otomatis)", value=int(poin_otomatis), disabled=True, key="poin_pelang")
+                        pelanggaran_list = df_db_pelanggaran["Nama Pelanggaran"].astype(str).tolist()
+                        # Autocomplete pelanggaran
+                        pelanggaran_query = st.text_input("Pilih Pelanggaran", value="", placeholder="Ketik pelanggaran...", key="pelanggaran_query")
+                        suggestions_pelang = []
+                        if pelanggaran_query:
+                            suggestions_pelang = [p for p in pelanggaran_list if pelanggaran_query.lower() in p.lower()][:10]
+                        
+                        if suggestions_pelang:
+                            st.caption("Saran Pelanggaran:")
+                            pilih_pelang = st.radio("Pilih dari saran", options=suggestions_pelang, key="pelang_saran")
+                            if pilih_pelang:
+                                selected = pilih_pelang
                         else:
-                            st.warning("Database pelanggaran kosong")
+                            # jika user mengetik dan tidak memilih saran, biarkan selected = apa yang diketik
+                            if pelanggaran_query:
+                                selected = pelanggaran_query
+                        
+                        # Ambil poin otomatis bila nama pelanggaran ada di DB
+                        poin_row = df_db_pelanggaran[df_db_pelanggaran["Nama Pelanggaran"] == selected]
+                        if len(poin_row) > 0:
+                            poin_otomatis = float(poin_row["Poin"].values[0])
+                        
+                        st.number_input("Poin (otomatis)", value=int(poin_otomatis), disabled=True, key="poin_pelang")
                     else:
-                        st.warning("Database pelanggaran kosong atau format salah")
-                        st.info("Pastikan sheet 'pelanggaran' memiliki kolom: Nama Pelanggaran, Poin, Kategori")
-                
+                        st.warning("Database pelanggaran kosong")
                 elif jenis == "Prestasi":
                     if not df_db_prestasi.empty and "Nama Prestasi" in df_db_prestasi.columns:
-                        prestasi_list = df_db_prestasi["Nama Prestasi"].tolist()
-                        if len(prestasi_list) > 0:
-                            selected = st.selectbox(
-                                "Pilih Prestasi", 
-                                prestasi_list,
-                                help="Ketik untuk mencari",
-                                key="select_prestasi_input"
-                            )
-                            poin_row = df_db_prestasi[df_db_prestasi["Nama Prestasi"] == selected]
-                            if len(poin_row) > 0:
-                                poin_otomatis = float(poin_row["Poin"].values[0])
-                            st.number_input("Poin (otomatis)", value=int(poin_otomatis), disabled=True, key="poin_pres")
+                        prestasi_list = df_db_prestasi["Nama Prestasi"].astype(str).tolist()
+                        # Autocomplete prestasi
+                        prestasi_query = st.text_input("Pilih Prestasi", value="", placeholder="Ketik prestasi...", key="prestasi_query")
+                        suggestions_pres = []
+                        if prestasi_query:
+                            suggestions_pres = [p for p in prestasi_list if prestasi_query.lower() in p.lower()][:10]
+                        
+                        if suggestions_pres:
+                            st.caption("Saran Prestasi:")
+                            pilih_pres = st.radio("Pilih dari saran", options=suggestions_pres, key="pres_saran")
+                            if pilih_pres:
+                                selected = pilih_pres
                         else:
-                            st.warning("Database prestasi kosong")
+                            if prestasi_query:
+                                selected = prestasi_query
+                        
+                        poin_row = df_db_prestasi[df_db_prestasi["Nama Prestasi"] == selected]
+                        if len(poin_row) > 0:
+                            poin_otomatis = float(poin_row["Poin"].values[0])
+                        
+                        st.number_input("Poin (otomatis)", value=int(poin_otomatis), disabled=True, key="poin_pres")
                     else:
-                        st.warning("Database prestasi kosong atau format salah")
-                        st.info("Pastikan sheet 'prestasi' memiliki kolom: Nama Prestasi, Poin, Kategori")
-            
+                        st.warning("Database prestasi kosong")
+                
             # Hitung poin kumulatif
             if not df_rekap.empty and nama:
                 df_siswa_rekap = df_rekap[df_rekap['Nama Siswa'] == nama]
@@ -782,30 +815,34 @@ elif page == "Tambah Data":
             
             submit = st.form_submit_button("Simpan Data", use_container_width=True)
             
-            if submit and selected and poin_otomatis > 0:
-                try:
-                    client = get_gspread_client()
-                    spreadsheet = client.open_by_key("1U-RPsmFwSwtdRkMdUlxsndpq15JtZHDulnkf-0v5gCc")
-                    ws_rekap_write = spreadsheet.worksheet("rekap_pelanggaran")
-                    
-                    tanggal = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-                    ws_rekap_write.append_row([
-                        tanggal, 
-                        nama, 
-                        kelas, 
-                        jenis,
-                        selected,
-                        float(poin_input),
-                        float(poin_kumulatif_baru)
-                    ])
-                    st.success(f"Data berhasil disimpan untuk {nama}! Total poin sekarang: {poin_kumulatif_baru:+.0f}")
-                    st.balloons()
-                    st.cache_data.clear()
-                    st.rerun()
-                except Exception as e:
-                    st.error(f"Gagal menyimpan: {e}")
-            elif submit:
-                st.warning("Pilih pelanggaran/prestasi terlebih dahulu!")
+            # Validasi: pastikan ada nama dan selected pelanggaran/prestasi dengan poin > 0
+            if submit:
+                if not nama or str(nama).strip() == "":
+                    st.warning("Isi nama siswa terlebih dahulu!")
+                elif not selected or poin_otomatis <= 0:
+                    st.warning("Pilih pelanggaran/prestasi dari saran agar poin otomatis tersedia!")
+                else:
+                    try:
+                        client = get_gspread_client()
+                        spreadsheet = client.open_by_key("1U-RPsmFwSwtdRkMdUlxsndpq15JtZHDulnkf-0v5gCc")
+                        ws_rekap_write = spreadsheet.worksheet("rekap_pelanggaran")
+                        
+                        tanggal = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+                        ws_rekap_write.append_row([
+                            tanggal, 
+                            nama, 
+                            kelas, 
+                            jenis,
+                            selected,
+                            float(poin_input),
+                            float(poin_kumulatif_baru)
+                        ])
+                        st.success(f"Data berhasil disimpan untuk {nama}! Total poin sekarang: {poin_kumulatif_baru:+.0f}")
+                        st.balloons()
+                        st.cache_data.clear()
+                        st.rerun()
+                    except Exception as e:
+                        st.error(f"Gagal menyimpan: {e}")
         
         st.markdown("</div>", unsafe_allow_html=True)
 
