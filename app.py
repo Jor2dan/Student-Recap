@@ -786,31 +786,40 @@ elif page == "Tambah Data":
             if submit and nama and selected:
                 poin_input = -poin_otomatis if jenis == "Pelanggaran" else poin_otomatis
 
-                if not df_rekap.empty:
-                    prev = df_rekap[df_rekap["Nama Siswa"] == nama]["Poin Kumulatif"]
-                    poin_sebelum = prev.iloc[-1] if not prev.empty else 0
-                else:
-                    poin_sebelum = 0
-
-                poin_baru = int(poin_sebelum) + int(poin_input)
-
                 client = get_gspread_client()
                 spreadsheet = client.open_by_key("1U-RPsmFwSwtdRkMdUlxsndpq15JtZHDulnkf-0v5gCc")
-                ws_rekap_write = spreadsheet.worksheet("rekap_pelanggaran")
+                ws_rekap = spreadsheet.worksheet("rekap_pelanggaran")
 
-                ws_rekap_write.append_row([
+                records = ws_rekap.get_all_values()
+
+                poin_sebelum = 0
+                if len(records) > 1:
+                    df_temp = pd.DataFrame(records[1:], columns=records[0])
+                    df_temp["Poin Kumulatif"] = pd.to_numeric(
+                        df_temp["Poin Kumulatif"], errors="coerce"
+                    ).fillna(0)
+
+                    siswa_data = df_temp[df_temp["Nama Siswa"] == nama]
+                    if not siswa_data.empty:
+                        poin_sebelum = int(siswa_data.iloc[-1]["Poin Kumulatif"])
+
+                poin_baru = poin_sebelum + poin_input
+
+                ws_rekap.append_row([
                     datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
-                    str(nama),
-                    str(kelas),
-                    str(jenis),
-                    str(selected),
-                    str(poin_input),
-                    str(poin_baru)
+                    nama,
+                    kelas,
+                    jenis,
+                    selected,
+                    poin_input,
+                    poin_baru
                 ])
 
                 st.success("Data berhasil disimpan.")
+                st.cache_data.clear()
+                st.rerun()
 
-        st.markdown("</div>", unsafe_allow_html=True)
+
 
 # -------------------------------------------------------
 # 📋 HALAMAN LIHAT DATA
