@@ -544,7 +544,8 @@ def load_data():
                 if "Poin" in df_db_prestasi.columns:
                     df_db_prestasi["Poin"] = pd.to_numeric(df_db_prestasi["Poin"], errors='coerce').fillna(0)
 
-            return df_siswa, df_rekap, df_db_pelanggaran, df_db_prestasi, ws_siswa, ws_rekap, ws_pelanggaran, ws_prestasi
+            return df_siswa, df_rekap, df_db_pelanggaran, df_db_prestasi
+
             
         except Exception as e:
             if attempt < max_retries - 1:
@@ -563,7 +564,8 @@ def load_data():
                 """)
                 st.stop()
 
-df_siswa, df_rekap, df_db_pelanggaran, df_db_prestasi, ws_siswa, ws_rekap, ws_pelanggaran, ws_prestasi = load_data()
+df_siswa, df_rekap, df_db_pelanggaran, df_db_prestasi = load_data()
+
 
 # -------------------------------------------------------
 # 🧭 SIDEBAR NAVIGATION
@@ -790,16 +792,20 @@ elif page == "Tambah Data":
                 else:
                     poin_sebelum = 0
 
-                poin_baru = poin_sebelum + poin_input
+                poin_baru = int(poin_sebelum) + int(poin_input)
 
-                ws_rekap.append_row([
+                client = get_gspread_client()
+                spreadsheet = client.open_by_key("1U-RPsmFwSwtdRkMdUlxsndpq15JtZHDulnkf-0v5gCc")
+                ws_rekap_write = spreadsheet.worksheet("rekap_pelanggaran")
+
+                ws_rekap_write.append_row([
                     datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
-                    nama,
-                    kelas,
-                    jenis,
-                    selected,
-                    poin_input,
-                    poin_baru
+                    str(nama),
+                    str(kelas),
+                    str(jenis),
+                    str(selected),
+                    str(poin_input),
+                    str(poin_baru)
                 ])
 
                 st.success("Data berhasil disimpan.")
