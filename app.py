@@ -706,6 +706,12 @@ elif page == "Tambah Data":
     else:
         st.markdown("<div class='card'>", unsafe_allow_html=True)
 
+        jenis = st.radio(
+        "Jenis",
+        ["Pelanggaran", "Prestasi"],
+        horizontal=True
+        )
+
         with st.form("form_tambah"):
             col1, col2 = st.columns(2)
 
@@ -726,11 +732,6 @@ elif page == "Tambah Data":
 
                 st.text_input("Kelas", value=kelas, disabled=True)
 
-                jenis = st.radio(
-                    "Jenis",
-                    ["Pelanggaran", "Prestasi"],
-                    horizontal=True
-                )
 
             # ===== KANAN =====
             with col2:
@@ -739,11 +740,13 @@ elif page == "Tambah Data":
 
                 if jenis == "Pelanggaran" and not df_db_pelanggaran.empty:
                     selected = st.selectbox(
-                        "Pilih Pelanggaran",
-                        df_db_pelanggaran["Nama Pelanggaran"].tolist(),
-                        index=None,
-                        placeholder="Pilih pelanggaran"
+                    "Pilih Pelanggaran",
+                    df_db_pelanggaran["Nama Pelanggaran"].tolist(),
+                    index=None,
+                    placeholder="Pilih pelanggaran",
+                    key="select_pelanggaran"
                     )
+
 
                     if selected:
                         poin_otomatis = int(
@@ -755,10 +758,11 @@ elif page == "Tambah Data":
 
                 elif jenis == "Prestasi" and not df_db_prestasi.empty:
                     selected = st.selectbox(
-                        "Pilih Prestasi",
-                        df_db_prestasi["Nama Prestasi"].tolist(),
-                        index=None,
-                        placeholder="Pilih prestasi"
+                    "Pilih Prestasi",
+                    df_db_prestasi["Nama Prestasi"].tolist(),
+                    index=None,
+                    placeholder="Pilih prestasi",
+                    key="select_prestasi"
                     )
 
                     if selected:
