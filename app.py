@@ -13,6 +13,13 @@ st.set_page_config(
     layout="wide",
     initial_sidebar_state="expanded"
 )
+
+# -------------------------------------------------------
+# 🔐 SESSION STATE TAB (ANTI BALIK KE BERANDA)
+# -------------------------------------------------------
+if "active_tab" not in st.session_state:
+    st.session_state.active_tab = 0
+
 # -------------------------------------------------------
 # 🚫 HILANGKAN HEADER HITAM STREAMLIT
 # -------------------------------------------------------
@@ -527,6 +534,17 @@ textarea:disabled {
 
 st.markdown(MODERN_CSS, unsafe_allow_html=True)
 
+# ==============================
+# Navigasi Header Tabs (menggantikan sidebar)
+# ==============================
+tabs = ["Beranda", "Tambah Data", "Lihat Data", "Kelola Siswa", "Ranking", "Pelanggaran", "Prestasi"]
+
+if "active_tab" not in st.session_state:
+    st.session_state.active_tab = 0
+
+tab1, tab2, tab3, tab4, tab5, tab6, tab7 = st.tabs(tabs)
+pages = [tab1, tab2, tab3, tab4, tab5, tab6, tab7]
+
 # -------------------------------------------------------
 # 📊 GOOGLE SHEETS SETUP
 # -------------------------------------------------------
@@ -648,21 +666,14 @@ def load_data():
 
 df_siswa, df_rekap, df_db_pelanggaran, df_db_prestasi = load_data()
 
-# 🧭 TOP NAVIGATION (TABS)
-page = st.tabs([
-    "Beranda",
-    "Tambah Data",
-    "Lihat Data",
-    "Kelola Siswa",
-    "Ranking",
-    "Pelanggaran",
-    "Prestasi"
-])
+if "page" not in st.session_state:
+    st.session_state.page = "Beranda"
+
 
 # -------------------------------------------------------
 # 🏠 HALAMAN BERANDA
 # -------------------------------------------------------
-with page[0]:
+with pages[0]:
     st.markdown(f"""
     <div class='main-header'>
         <h1>Sistem Pelanggaran & Prestasi Siswa</h1>
@@ -767,7 +778,7 @@ with page[0]:
 # -------------------------------------------------------
 # ➕ HALAMAN TAMBAH DATA
 # -------------------------------------------------------
-with page[1]:
+with pages[1]:
     st.markdown("""
     <div class='main-header'>
         <h1>➕ Tambah Data Baru</h1>
@@ -942,7 +953,7 @@ with page[1]:
 # -------------------------------------------------------
 # 📋 HALAMAN LIHAT DATA
 # -------------------------------------------------------
-with page[2]:
+with pages[2]:
     st.markdown("""
     <div class='main-header'>
         <h1>📋 Data Rekap</h1>
@@ -1032,7 +1043,7 @@ with page[2]:
 # -------------------------------------------------------
 # 👥 HALAMAN KELOLA SISWA
 # -------------------------------------------------------
-with page[3]:
+with pages[3]:
     st.markdown("""
     <div class='main-header'>
         <h1>👥 Kelola Siswa</h1>
@@ -1091,7 +1102,7 @@ with page[3]:
 # -------------------------------------------------------
 # 🏆 HALAMAN RANKING
 # -------------------------------------------------------
-with page[4]:
+with pages[4]:
     st.markdown("""
     <div class='main-header'>
         <h1>🏆 Ranking Siswa</h1>
@@ -1158,7 +1169,7 @@ with page[4]:
 # -------------------------------------------------------
 # ⚠️ HALAMAN DATABASE PELANGGARAN
 # -------------------------------------------------------
-with page[5]:
+with pages[5]:
     st.markdown("""
     <div class='main-header'>
         <h1>⚠️ Database Pelanggaran</h1>
@@ -1221,7 +1232,7 @@ with page[5]:
 # -------------------------------------------------------
 # ⭐ HALAMAN DATABASE PRESTASI
 # -------------------------------------------------------
-with page[6]:
+with pages[6]:
     st.markdown("""
     <div class='main-header'>
         <h1>⭐ Database Prestasi</h1>
